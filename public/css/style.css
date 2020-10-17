@@ -1,0 +1,263 @@
+.modal {
+    overflow: auto !important;
+}
+
+table {
+    margin: 0 auto;
+    width: 100%;
+    clear: both;
+    border-collapse: collapse;
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+
+tr th {
+    text-align: center;
+}
+
+.table-bordered {
+    border: 1px solid rgba(158, 158, 158, 0.42);
+}
+
+.table-bordered>thead>tr>th,
+.table-bordered>tbody>tr>th,
+.table-bordered>tfoot>tr>th,
+.table-bordered>thead>tr>td,
+.table-bordered>tbody>tr>td,
+.table-bordered>tfoot>tr>td {
+    border: 0.5px solid rgba(158, 158, 158, 0.42);
+}
+
+form .error {
+    color: #ff0000;
+}
+
+#loading-img {
+    background: url("loading.gif") center center no-repeat;
+    height: 100%;
+    z-index: 1061;
+}
+
+.overlay {
+    background: rgba(0, 0, 0, 0.25);
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.5;
+    z-index: 1060;
+}
+
+.tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: 100%;
+    left: 50%;
+    margin-left: -60px;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+#loader,
+#loader_error {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    margin: -75px 0 0 0px;
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #db3434;
+    width: 90px;
+    height: 90px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.statusFull {
+    color: #0099ef;
+}
+
+.statusHigh {
+    color: #ffc600;
+}
+
+.statusNormal {
+    color: green;
+}
+
+.statusLow {
+    color: red;
+}
+
+.notification-line {
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+input[id="currentPw"],
+input[id="newPw"],
+input[id="confirmPw"] {
+    width: 250px;
+}
+
+.onTarget {
+    background: green;
+    padding: 3px;
+    border-radius: 100%;
+    color: white;
+}
+
+.warning {
+    font-size: 21px;
+    color: yellow;
+}
+
+#topOutlet tr:first-child th {
+    text-align: center;
+}
+
+i.fa.fa-clone:before {
+    content: "\f0c5" !important;
+}
+
+i.fa.fa-SecurityAccessControl:before {
+    content: "\f132";
+}
+
+i.fa.fa-Visitor:before {
+    content: "\f007"
+}
+
+i.fa.fa-Units:before {
+    content: "\f1ad";
+}
+
+.headerBtn {
+    display: inline-block;
+    float: right;
+    margin: 0px 2px 0px 2px;
+}
+
+#closeModal,
+#saveEditedVisitorLogBtn,
+#saveEditedUnitBtn,
+#addUnitBtn,
+#saveEditedUnitTenantBtn,
+#addUnitTenantBtn,
+#openAddUnitBtn,
+#saveEditedEmployeeBtn,
+#addEmployeeBtn,
+#editEmployeeBtn,
+#editEmployeeBtn,
+#closeModal,
+#deleteEmployeeButton {
+    float: right;
+    display: inline-block;
+    margin: 1px;
+}
+
+.viewVisitorButton,
+.viewVisitorLogButton,
+.editVisitorLogButton,
+.editUnitButton,
+.viewUnitButton,
+.deleteUnitButton,
+.editUnitTenantButton,
+.viewUnitTenantButton,
+.deleteUnitTenantButton,
+.editEmployeeButton,
+.viewEmployeeButton,
+.copyEmployeeButton,
+.deleteEmployeeButton {
+    padding: 2px 7px;
+    margin: 1px;
+}
+
+#openAddUnitBtn {
+    margin: 5px !important;
+}
+
+.leftDiv,
+.rightDiv {
+    display: inline-block;
+    width: 45%;
+    vertical-align: top;
+}
+
+.rightDiv {
+    margin: 0 0 0 50px;
+}
+
+@media only screen and (min-width: 1200px) {
+    #VisitorLogModal div.modal-dialog,
+    #UnitModal div.modal-dialog {
+        width: 900px;
+    }
+    #VisitorLogModal #boxBody1,
+    #VisitorLogModal #boxBody2,
+    #UnitModal #boxBody1,
+    #UnitModal #boxBody2 {
+        width: 40%;
+        display: inline-block;
+    }
+    #VisitorLogModal #boxBody1,
+    #UnitModal #boxBody1 {
+        float: left;
+    }
+}
+
+.addBtn-Unit,
+.addBtn-UnitTenant,
+.addBtn-errorMessage {
+    width: 100%;
+    text-align: right;
+    padding: 5px;
+    display: inline-block;
+}
+
+.checkOutButton {
+    font-size: 11px;
+    margin-left: 10px;
+    padding: 5px;
+}
+
+#employeeModalTitle {
+    float: left;
+    display: inline-block;
+}
+
+#confirmDeleteEmployeeCode {
+    font-weight: bold;
+}
