@@ -95,7 +95,7 @@ $("#employeeTbl").DataTable({
   "data" : [],
   "columns": [
     { data: 'Emp_Name'},
-    { data: 'LevelDesc',render: function(data, type, full){
+    { data: 'level_code.LevelDesc',render: function(data, type, full){
       if(data)
         return data;
       else

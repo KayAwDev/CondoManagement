@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\general\globalController as globalController;
-use DB;
+use App\Models\Employees;
+use App\Models\WebSecurity;
+use App\Models\WebProgram;
 use Request, View;
-use GuzzleHttp\Client;
 use Session;
 use Validator;
 use Redirect;
 use DateTime;
 use Config;
 use Response;
+use App;
 
 class UserController extends BaseController
 {
@@ -20,35 +22,6 @@ class UserController extends BaseController
     {
         $this->globalCtrl = new globalController();
     }
-
-	public function getData($api, $param){
-		$client = new Client();
-        $res = $client->request('GET', $api."?".http_build_query($param));
-        $data = $res->getBody();
-        $data = json_decode($data);
-
-        if($data->error == false){
-            $data = $data->data;
-            $data = (array)$data;
-            return $data;
-        }else{
-            return array();
-        }
-	}
-
-	public function postData($api,$data){
-
-		$ch = curl_init($api);
-  		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-  		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  		curl_setopt($ch, CURLOPT_POSTFIELDS,$data);
-  		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-  		$result = curl_exec($ch);
-  		curl_close($ch);
-  		$result = json_decode($result);
-
-  		return $result;
-	}
 
     public function login(){
         if(Request::all()){
@@ -63,52 +36,51 @@ class UserController extends BaseController
                     'username'      => Request::get('username'),
                     'password'      => Request::get('password')
                 );
-                $api = asset('api/login');
-                $login = $this->postData($api,$data);
 
-                if($login->error == true){
-                    return Redirect::back()->with('fail',$login->message)->withInput(Request::except('password'));
+                $controller = App::make(ApiController::class);
+                $login = $controller->callAction('login', $data);
+                $login = $login->original;
+
+                if($login['error'] == true){
+                    return Redirect::back()->with('fail',$login['message'])->withInput(Request::except('password'));
                 }else{
-                    $apiKey = $login->apiKey;
+                    $apiKey = $login['apiKey'];
                     Session::put('apiKey',$apiKey);
 
                     $username = Request::get('username');
 
                     //check
-                    $check = DB::table('WebSecurity')
-                    ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
-                    ->join('WebProgram','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-                    ->Where('Employees.Emp_Username', $username)
-                    ->where('WebSecurity.Allow',1)
-                    ->where('WebProgram.ParentProgramName',NULL)
-                    ->where('WebProgram.Active',1)
-                    ->orderBy('WebProgram.MenuSequence','asc')
-                    ->select('WebSecurity.ProgramName')
-                    ->first();
+                    $check = WebSecurity::join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
+                            ->join('web_programs','web_programs.ProgramName','=','web_securities.ProgramName')
+                            ->Where('Employees.Emp_Username', $username)
+                            ->where('web_securities.Allow',1)
+                            ->where('web_programs.ParentProgramName',NULL)
+                            ->where('web_programs.Active',1)
+                            ->orderBy('web_programs.MenuSequence','asc')
+                            ->select('web_securities.ProgramName')
+                            ->first();
 
                     if($check){
-                        $checkIfHasChild = DB::table('WebProgram')
-                            ->join('WebSecurity','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-                            ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
-                            ->where('WebProgram.Active',1)
-                            ->where('Employees.Emp_Username',$username)
-                            ->where('ParentProgramName',$check->ProgramName)
-                            ->where('Allow',1)
-                            ->orderBy('WebProgram.MenuSequence','asc')
-                            ->select('WebSecurity.ProgramName')
-                            ->first();
+                        $checkIfHasChild = WebProgram::join('web_securities','web_programs.ProgramName','=','web_securities.ProgramName')
+                                            ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
+                                            ->where('web_programs.Active',1)
+                                            ->where('Employees.Emp_Username',$username)
+                                            ->where('ParentProgramName',$check->ProgramName)
+                                            ->where('Allow',1)
+                                            ->orderBy('web_programs.MenuSequence','asc')
+                                            ->select('web_securities.ProgramName')
+                                            ->first();
 
                         if($checkIfHasChild){
-                            $checkIfHasSecondChild = DB::table('WebProgram')
-                            ->join('WebSecurity','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-                            ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
-                            ->where('WebProgram.Active',1)
-                            ->where('Employees.Emp_Username',$username)
-                            ->where('ParentProgramName',$checkIfHasChild->ProgramName)
-                            ->where('Allow',1)
-                            ->orderBy('WebProgram.MenuSequence','asc')
-                            ->select('WebSecurity.ProgramName')
-                            ->first();
+                            $checkIfHasSecondChild = WebProgram::join('web_securities','web_programs.ProgramName','=','web_securities.ProgramName')
+                                                    ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
+                                                    ->where('web_programs.Active',1)
+                                                    ->where('Employees.Emp_Username',$username)
+                                                    ->where('ParentProgramName',$checkIfHasChild->ProgramName)
+                                                    ->where('Allow',1)
+                                                    ->orderBy('web_programs.MenuSequence','asc')
+                                                    ->select('web_securities.ProgramName')
+                                                    ->first();
 
                             if($checkIfHasSecondChild){
                                 $route = $check->ProgramName.'/'.$checkIfHasChild->ProgramName.'/'.$checkIfHasSecondChild->ProgramName;

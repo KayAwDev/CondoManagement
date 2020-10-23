@@ -1,11 +1,14 @@
 <?php
 namespace App\Http\Composers;
+
 use Illuminate\Contracts\View\View;
-use DB;
+use App\Http\Controllers\ApiController as ApiController;
+use App\Models\WebProgram;
+use App\Models\Employees;
+use App\Models\ApiAuth;
 use Session;
 use Route;
 use Config;
-use App\Http\Controllers\ApiController as ApiController;
 
 class MasterComposer {
 
@@ -21,16 +24,16 @@ class MasterComposer {
         $idleTime = $idleTime*60*1000;
 
         $apiKey = Session::get('apiKey');
-        $username = DB::table('apiAuth')->where('apikey',$apiKey)->value('username');
 
         $userInfo = $this->apiCtrl->_getUserInfo($apiKey);
-		$routeName = Route::currentRouteName();
 
-        $groupCode = DB::table('Employees')->where('Emp_Username',$username)->value('Emp_Level');
+        $routeName = Route::currentRouteName();
 
-		$menus = DB::table('WebProgram')
-				->join('WebSecurity','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-				->where('WebSecurity.Emp_Level',$groupCode)
+        $username = ApiAuth::where('apikey',$apiKey)->value('username');
+        $groupCode = Employees::where('Emp_Username',$username)->value('Emp_Level');
+
+        $menus = WebProgram::join('web_securities','web_programs.ProgramName','=','web_securities.ProgramName')
+				->where('web_securities.Emp_Level',$groupCode)
 				->where('Allow',1)
 				->where('Active',1)
 				->where('ParentProgramName',NULL)
@@ -40,26 +43,24 @@ class MasterComposer {
         $menu = array();
 
         foreach($menus as $menu2){
-            $subMenu = DB::table('WebProgram')
-                ->join('WebSecurity','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-                ->where('WebSecurity.Emp_Level',$groupCode)
-                ->where('Allow',1)
-                ->where('Active',1)
-                ->where('ParentProgramName',$menu2->ProgramName)
-                ->orderBy('MenuSequence','asc')
-                ->get();
+            $subMenu = WebProgram::join('web_securities','web_programs.ProgramName','=','web_securities.ProgramName')
+                        ->where('web_securities.Emp_Level',$groupCode)
+                        ->where('Allow',1)
+                        ->where('Active',1)
+                        ->where('ParentProgramName',$menu2->ProgramName)
+                        ->orderBy('MenuSequence','asc')
+                        ->get();
 
             foreach($subMenu as $menu3){
-                $subMenu2 = DB::table('WebProgram')
-                    ->join('WebSecurity','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-                    ->where('WebSecurity.Emp_Level',$groupCode)
-                    ->where('Allow',1)
-                    ->where('Active',1)
-                    ->where('ParentProgramName',$menu3->ProgramName)
-                    ->orderBy('MenuSequence','asc')
-                    ->get();
+                $subMenu2 = WebProgram::join('web_securities','web_programs.ProgramName','=','web_securities.ProgramName')
+                            ->where('web_securities.Emp_Level',$groupCode)
+                            ->where('Allow',1)
+                            ->where('Active',1)
+                            ->where('ParentProgramName',$menu3->ProgramName)
+                            ->orderBy('MenuSequence','asc')
+                            ->get();
 
-                    $menu3->subProgram = $subMenu2;
+                $menu3->subProgram = $subMenu2;
             }
 
             $menu2->subProgram = $subMenu;

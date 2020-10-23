@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\general;
 
 use Illuminate\Routing\Controller as BaseController;
-use App\Http\Controllers\UserController as UserController;
 use Session;
-use DB;
 
 class globalController extends BaseController
 {

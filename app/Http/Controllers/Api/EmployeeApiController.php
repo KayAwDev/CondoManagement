@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\general\globalController as globalController;
+use App\Http\Controllers\ApiController as ApiController;
+use App\Models\LevelCode;
+use App\Models\Employees;
 use DB;
 use Request, View;
 use Response;
@@ -11,19 +14,18 @@ use Session;
 use Validator;
 use ArrayObject;
 use DateTime;
-use App\Http\Controllers\ApiController as apiCtrl;
 
 class EmployeeApiController extends BaseController
 {
 	public function __construct()
     {
 		$this->globalCtrl = new globalController();
-        $this->apiCtrl = new apiCtrl();
+        $this->apiCtrl = new ApiController();
         $this->now = date("Y-m-d h:i:s");
     }
 
     public function getUserProfileList(){
-        $data = DB::table('LevelCode')->select('LevelCode as code','LevelDesc as name')->orderBy('LevelCode','asc')->get();
+        $data = LevelCode::select('LevelCode as code','LevelDesc as name')->orderBy('LevelCode','asc')->get();
 
         if(count($data) > 0){
             return Response::json(array(
@@ -43,9 +45,7 @@ class EmployeeApiController extends BaseController
     }
 
     public function getEmployeeList(){
-        $data = DB::table('Employees')
-                ->leftJoin('LevelCode','LevelCode.LevelCode','=','Employees.Emp_Level')
-                ->get();
+        $data = Employees::with('LevelCode')->get();
 
         if(count($data) > 0){
             return Response::json(array(
@@ -69,7 +69,7 @@ class EmployeeApiController extends BaseController
                         'employeeName'              => 'required|max:100',
                         'password'                  => 'required',
                         'confirmPassword'           => 'required',
-                        'userProfile'               => 'required|exists:LevelCode,LevelCode'
+                        'userProfile'               => 'required|exists:level_codes,LevelCode'
         );
 
         $validator = Validator::make(Request::all(),$rules);
@@ -100,11 +100,14 @@ class EmployeeApiController extends BaseController
             $password = $this->apiCtrl->encryptPassword($password);
         }
 
-        $updateArray = array('Emp_Name'=>$employeeName,'Emp_Level'=>$userProfile,'Emp_Password'=>$password);
+        $updateArray = array('Emp_Name'     => $employeeName,
+                             'Emp_Level'    => $userProfile,
+                             'Emp_Password' => $password
+                            );
 
         DB::beginTransaction();
         try{
-            DB::table('Employees')->where('Emp_Username',$username)->update($updateArray);
+            Employees::where('Emp_Username',$username)->update($updateArray);
 
             DB::commit();
             return Response::json(array(
@@ -130,7 +133,7 @@ class EmployeeApiController extends BaseController
                         'employeeName'              => 'required|max:100',
                         'password'                  => 'required',
                         'confirmPassword'           => 'required',
-                        'userProfile'               => 'required|exists:LevelCode,LevelCode'
+                        'userProfile'               => 'required|exists:level_codes,LevelCode'
         );
 
         $customMessages = [
@@ -157,11 +160,17 @@ class EmployeeApiController extends BaseController
             $password = $this->apiCtrl->encryptPassword($password);
         }
 
-        $addArray = array('Emp_Username'=>$username,'Emp_Name'=>$employeeName,'Emp_Level'=>$userProfile,'Emp_Password'=>$password,'CreatedDateTime'=>$this->now);
+        $addArray = array('Emp_Username'    => $username,
+                          'Emp_Name'        => $employeeName,
+                          'Emp_Level'       => $userProfile,
+                          'Emp_Password'    => $password,
+                          'CreatedDateTime' => $this->now
+                        );
 
         DB::beginTransaction();
         try{
-            $addEmployee = DB::table('Employees')->insert($addArray);
+            Employees::create($addArray);
+
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -199,7 +208,9 @@ class EmployeeApiController extends BaseController
         DB::beginTransaction();
         try{
             $username = Request::get('username');
-            DB::table('Employees')->where('Emp_Username',$username)->delete();
+
+            Employees::find($username)->delete();
+
             DB::commit();
             return Response::json(array(
                 'error' => false,

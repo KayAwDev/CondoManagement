@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\general\globalController as globalController;
+use App\Models\ApiAuth;
+use App\Models\Employees;
 use DB;
 use Request, View;
 use Response;
@@ -72,11 +74,9 @@ class ApiController extends BaseController
 
     public function _getUserInfo($apiKey = null){
         try{
-            $userCode = DB::table('apiAuth')->where('apiKey',$apiKey)->value('username');
-            $userInfo = DB::table('Employees as emp')
-                        ->leftjoin('LevelCode as level','level.LevelCode','=','emp.Emp_Level')
-                        ->select('emp.Emp_Username as userCode','emp.Emp_Name as name','level.LevelDesc as userProfile')
-                        ->where('emp.Emp_Username',$userCode)
+            $userCode = ApiAuth::where('apiKey', $apiKey)->value('username');
+            $userInfo = Employees::where('Emp_Username',$userCode)->leftjoin('level_codes','level_codes.LevelCode','=','Employees.Emp_Level')
+                        ->select('Employees.Emp_Username as userCode','Employees.Emp_Name as name','level_codes.LevelDesc as userProfile')
                         ->first();
 
             return $userInfo;
@@ -149,7 +149,7 @@ class ApiController extends BaseController
     	$username = Request::get('username');
     	$toEncrypt = Request::get('password');
 
-        $user = DB::table('Employees')->where('Emp_Username',$username)->first();
+        $user = Employees::find($username);
 
         if(!$user){
             return Response::json(array(
@@ -162,14 +162,12 @@ class ApiController extends BaseController
     	$decrypted_pw = $this->decryptPassword($user->Emp_Password);
 
 		if($decrypted_pw == $toEncrypt){
-            //create api auth
             $apiKey = $this->globalCtrl->apiauth();
 
+            DB::beginTransaction();
             try{
-                DB::beginTransaction();
-                DB::table('apiAuth')->insert(array('username' => $username,'apikey' => $apiKey));
+                ApiAuth::create(['username' => $username, 'apiKey' => $apiKey, 'createdAt'=> $this->now]);
                 DB::commit();
-
                 return Response::json(array(
                     'error'     => false,
                     'code'      => 200,

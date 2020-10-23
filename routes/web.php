@@ -9,6 +9,8 @@ Route::get('/', function () {
 Route::any('login',array('middleware' => 'userSession','uses'=>'UserController@login'));
 Route::get('logout',array('uses'=>'UserController@logout'));
 Route::get('_encrypt',array("uses"=>"ApiController@_encrypt"));
+Route::get('_getUserInfo',array("uses"=>"ApiController@_getUserInfo"));
+
 
 Route::group(array('middleware' => ['userAuth','web']), function(){
     Route::group(array('prefix'=>'SecurityAccessControl'),function(){
@@ -28,7 +30,7 @@ Route::group(array('prefix' => 'api'), function(){
 	Route::post('login',array("uses"=>"ApiController@login"));
     Route::get('decryptPassword',array("uses"=>"ApiController@decryptPassword"));
 
-	Route::group(array('middleware' => 'apiAuth'), function(){
+	Route::group(array('middleware' => 'userApiAuth'), function(){
         //employees
         Route::group(array('prefix' => 'Employees','namespace'=>'Api'), function(){
             Route::get('getUserProfileList',array('uses'=>'EmployeeApiController@getUserProfileList'));

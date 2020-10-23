@@ -158,10 +158,16 @@ $("#VisitorLogTbl").DataTable({
             return full.Block+'-'+full.UnitNumber;
         }
     }},
-    {data: 'EnterDateTime'},
+    {data: 'EnterDateTime', render: function(data,type,full){
+        if(data){
+            return data.split('.')[0];
+        }else{
+            return '-';
+        }
+    }},
     {data: 'ExitDateTime', render: function(data,type,full){
         if(data){
-            return data;
+            return data.split('.')[0];
         }else{
             return '-';
         }
@@ -258,8 +264,18 @@ function fillData(data){
         var visitPlace = '-';
     }
     $('#VisitPlace').val(visitPlace);
-    $('#EnterDateTime').val(data.EnterDateTime);
-    $('#ExitDateTime').val(data.ExitDateTime);
+    if(data.EnterDateTime){
+        var EnterDateTime = data.EnterDateTime;
+        var EnterDateTime = EnterDateTime.split('.')[0];
+    }else{
+        var EnterDateTime = '-';
+    }
+    $('#EnterDateTime').val(EnterDateTime);
+    if(data.ExitDateTime){
+        var ExitDateTime = data.ExitDateTime;
+        var ExitDateTime = ExitDateTime.split('.')[0];
+    }
+    $('#ExitDateTime').val(ExitDateTime);
     $('#VisitorLogModal').modal('toggle');
 }
 

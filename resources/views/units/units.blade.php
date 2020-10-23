@@ -416,7 +416,13 @@ function fillData(data) {
     $('#UnitNo').val(data.UnitNumber);
     $('#Owner').val(data.UnitOwner);
     $('#OwnerContactNo').val(data.Owner_ContactNumber);
-    $('#unitCreatedDateTime').text(data.CreatedDateTime);
+    if(data.CreatedDateTime){
+        var CreatedDateTime = data.CreatedDateTime;
+        var CreatedDateTime = CreatedDateTime.split('.')[0];
+    }else{
+        var CreatedDateTime = '-';
+    }
+    $('#unitCreatedDateTime').text(CreatedDateTime);
     getUnitTenantDataTable(data.UnitID);
     $('#UnitTenantTab').data('UnitID', data.UnitID);
     $('#UnitModalTitle').text('Unit Detail');
@@ -428,7 +434,13 @@ function fillUnitTenantData(data) {
     $('#UnitTenantID').val(data.TenantID);
     $('#TenantName').val(data.Tenant_Name);
     $('#TenantContactNo').val(data.Tenant_ContactNumber);
-    $("#unitTenantCreatedDateTime").text(data.CreatedDateTime);
+    if(data.CreatedDateTime){
+        var CreatedDateTime = data.CreatedDateTime;
+        var CreatedDateTime = CreatedDateTime.split('.')[0];
+    }else{
+        var CreatedDateTime = '-';
+    }
+    $("#unitTenantCreatedDateTime").text(CreatedDateTime);
     $('#UnitTenantModal').modal('toggle');
     $('.unitTenantCreatedDateTimeDiv').css({ 'display': 'block' });
 }

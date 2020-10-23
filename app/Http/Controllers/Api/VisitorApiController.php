@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\general\globalController as globalController;
+use App\Http\Controllers\ApiController as ApiController;
+use App\Models\VisitorLog;
+use App\Models\Units;
 use DB;
 use Request, View;
 use Response;
@@ -11,14 +14,13 @@ use Session;
 use Validator;
 use ArrayObject;
 use DateTime;
-use App\Http\Controllers\ApiController as apiCtrl;
 
 class VisitorApiController extends BaseController
 {
 	public function __construct()
     {
 		$this->globalCtrl = new globalController();
-        $this->apiCtrl = new apiCtrl();
+        $this->apiCtrl = new ApiController();
         $this->now = date("Y-m-d h:i:s");
     }
 
@@ -33,9 +35,8 @@ class VisitorApiController extends BaseController
         $VisitorPhone = Request::get('searchVisitorPhone');
         $Exit = Request::get('Exit');
 
-        $data = DB::table('VisitorLog')
-                ->leftjoin('Units','Units.UnitID','=','VisitorLog.Visit_UnitID')
-                ->select('VisitorLog.*','Units.Block','Units.UnitNumber');
+        $data = VisitorLog::leftjoin('Units','Units.UnitID','=','visitor_logs.Visit_UnitID')
+                ->select('visitor_logs.*','Units.Block','Units.UnitNumber');
 
         if($DateFrom || $DateTo){
             if(!$DateFrom || !$DateTo){
@@ -54,20 +55,20 @@ class VisitorApiController extends BaseController
 
             $dateArray = array($DateFrom.' 00:00:00',$DateTo.' 23:59:59');
             if($DateType == 'Enter'){
-                $data = $data->whereBetween('VisitorLog.EnterDateTime', $dateArray);
+                $data = $data->whereBetween('visitor_logs.EnterDateTime', $dateArray);
             }else if($DateType == 'Exit'){
-                $data = $data->whereBetween('VisitorLog.ExitDateTime', $dateArray);
+                $data = $data->whereBetween('visitor_logs.ExitDateTime', $dateArray);
             }
         }else{
             if(!$Exit){
                 $Date = date('Y-m-d', strtotime($this->now));
                 $dateArray = array($Date.' 00:00:00',$Date.' 23:59:59');
-                $data = $data->whereBetween('VisitorLog.EnterDateTime', $dateArray);
+                $data = $data->whereBetween('visitor_logs.EnterDateTime', $dateArray);
             }
         }
 
         if($VisitPlace == 'Function'){
-            $data = $data->where('VisitorLog.VisitPlace', $VisitPlace);
+            $data = $data->where('visitor_logs.VisitPlace', $VisitPlace);
         }else{
             if($Block){
                 $data = $data->where('Units.Block', $Block);
@@ -80,11 +81,11 @@ class VisitorApiController extends BaseController
 
         if($VisitorNRIC){
             $VisitorNRIC = substr($VisitorNRIC, -3);
-            $data = $data->where('VisitorLog.Visitor_NRIC', $VisitorNRIC);
+            $data = $data->where('visitor_logs.Visitor_NRIC', $VisitorNRIC);
         }
 
         if($VisitorPhone){
-            $data = $data->where('VisitorLog.Visitor_ContactNumber', 'like','%'.$VisitorPhone.'%');
+            $data = $data->where('visitor_logs.Visitor_ContactNumber', 'like','%'.$VisitorPhone.'%');
         }
 
         if($Exit){
@@ -111,7 +112,7 @@ class VisitorApiController extends BaseController
 
     public function editVisitorLog(){
         $rules = array(
-            'VisitorLogID' => 'required|exists:VisitorLog,VisitorLogID'
+            'VisitorLogID' => 'required|exists:visitor_logs,VisitorLogID'
         );
 
         $validator = Validator::make(Request::all(),$rules);
@@ -128,7 +129,9 @@ class VisitorApiController extends BaseController
         try{
             $VisitorLogID = Request::get('VisitorLogID');
             $ExitDateTime = Request::get('ExitDateTime');
-            DB::table('VisitorLog')->where('VisitorLogID',$VisitorLogID)->update(array('ExitDateTime' => $ExitDateTime));
+
+            VisitorLog::find($VisitorLogID)->update(['ExitDateTime' => $ExitDateTime]);
+
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -183,10 +186,11 @@ class VisitorApiController extends BaseController
 
 
         if($VisitPlace == 'Unit'){
-            $unitID = DB::table('Units')->where('Block',$Block)->where('UnitNumber',$UnitNo)->value('UnitID');
+            $unitID = Units::where('Block',$Block)->where('UnitNumber',$UnitNo)->value('UnitID');
 
             if($unitID){
-                $visitor = DB::table('VisitorLog')->where('Visit_UnitID',$unitID)->whereNull('ExitDateTime')->get();
+                $visitor = VisitorLog::where('Visit_UnitID',$unitID)->whereNull('ExitDateTime')->get();
+
                 if(count($visitor) >= 5){
                     return Response::json(array(
                         'error' => true,
@@ -216,7 +220,8 @@ class VisitorApiController extends BaseController
 
         DB::beginTransaction();
         try{
-            DB::table('VisitorLog')->insert($insertArray);
+            VisitorLog::create($insertArray);
+
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -238,7 +243,7 @@ class VisitorApiController extends BaseController
 
     public function visitorCheckOut(){
         $rules = array(
-            'VisitorLogID' => 'required|exists:VisitorLog,VisitorLogID'
+            'VisitorLogID' => 'required|exists:visitor_logs,VisitorLogID'
         );
 
         $validator = Validator::make(Request::all(),$rules);
@@ -254,7 +259,9 @@ class VisitorApiController extends BaseController
         DB::beginTransaction();
         try{
             $VisitorLogID = Request::get('VisitorLogID');
-            DB::table('VisitorLog')->where('VisitorLogID',$VisitorLogID)->update(array('ExitDateTime' => $this->now));
+
+            VisitorLog::find($VisitorLogID)->update(['ExitDateTime' => $this->now]);
+
             DB::commit();
             return Response::json(array(
                 'error' => false,

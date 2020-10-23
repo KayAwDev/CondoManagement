@@ -1,12 +1,12 @@
 <?php
 return [
 	'db_host'									    => '127.0.0.1',
-    'db_database'								    => 'TempCondo',
+    'db_database'								    => 'CondoManagement',
 	'db_username'								    => 'sa',
     'db_password'								    => 'BAH3S3+iHDM=',
     'extra'										    => 'Temp',
     'EmpKey'                                        => 'CondoEmp',
-    'tabTitle'                                      => 'Condo Management',
+    'tabTitle'                                      => 'CM',
     'masterTitleMini'                               => 'CM',
     'masterTitle1'                                  => 'Condo',
     'masterTitle2'                                  => 'Management',

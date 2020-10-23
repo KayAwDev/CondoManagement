@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Routing\Controller as BaseController;
 use App\Http\Controllers\general\globalController as globalController;
+use App\Http\Controllers\ApiController as ApiController;
+use App\Models\VisitorLog;
+use App\Models\Tenants;
+use App\Models\Units;
 use DB;
 use Request, View;
 use Response;
@@ -11,14 +15,13 @@ use Session;
 use Validator;
 use ArrayObject;
 use DateTime;
-use App\Http\Controllers\ApiController as apiCtrl;
 
 class UnitsApiController extends BaseController
 {
 	public function __construct()
     {
 		$this->globalCtrl = new globalController();
-        $this->apiCtrl = new apiCtrl();
+        $this->apiCtrl = new ApiController();
         $this->now = date("Y-m-d h:i:s");
     }
 
@@ -28,11 +31,10 @@ class UnitsApiController extends BaseController
         $searchType = Request::get('searchType');
         $TenantInput = Request::get('searchInput');
 
-        $data = DB::table('Units');
+        $data = Units::select('Units.*');
 
         if($searchType && $TenantInput){
-            $data = $data->leftjoin('Tenants','Tenants.Tenant_UnitID','=','Units.UnitID')
-                         ->select('Units.*');
+            $data = $data->leftjoin('Tenants','Tenants.Tenant_UnitID','=','Units.UnitID');
 
             if($searchType == 'name'){
                 $data = $data->where('Tenants.Tenant_Name','like','%'.$TenantInput.'%');
@@ -90,16 +92,16 @@ class UnitsApiController extends BaseController
         $Owner = Request::get('Owner');
         $OwnerContactNo = Request::get('OwnerContactNo');
 
-        $addArray = array('Block'                   =>$Block,
-                          'UnitNumber'              =>$UnitNo,
-                          'UnitOwner'               =>$Owner,
-                          'Owner_ContactNumber'     =>$OwnerContactNo,
-                          'CreatedDateTime'         =>$this->now
+        $addArray = array('Block'                   => $Block,
+                          'UnitNumber'              => $UnitNo,
+                          'UnitOwner'               => $Owner,
+                          'Owner_ContactNumber'     => $OwnerContactNo,
+                          'CreatedDateTime'         => $this->now
                         );
 
         DB::beginTransaction();
         try{
-            DB::table('Units')->insert($addArray);
+            Units::create($addArray);
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -119,7 +121,7 @@ class UnitsApiController extends BaseController
     }
 
     public function editUnit(){
-        $rules = array('UnitID'                 => 'required|exists:Units,UnitID',
+        $rules = array('UnitID'                 => 'required|exists:units,UnitID',
                         'Block'                 => 'required',
                         'UnitNo'                => 'required',
                         'Owner'                 => 'required',
@@ -142,15 +144,15 @@ class UnitsApiController extends BaseController
         $Owner = Request::get('Owner');
         $OwnerContactNo = Request::get('OwnerContactNo');
 
-        $updateArray = array('Block'                   =>$Block,
-                            'UnitNumber'              =>$UnitNo,
-                            'UnitOwner'               =>$Owner,
-                            'Owner_ContactNumber'     =>$OwnerContactNo
+        $updateArray = array('Block'                   => $Block,
+                             'UnitNumber'              => $UnitNo,
+                             'UnitOwner'               => $Owner,
+                             'Owner_ContactNumber'     => $OwnerContactNo
                             );
 
         DB::beginTransaction();
         try{
-            DB::table('Units')->where('UnitID', $UnitID)->update($updateArray);
+            Units::find($UnitID)->update($updateArray);
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -171,7 +173,7 @@ class UnitsApiController extends BaseController
 
     public function deleteUnit(){
         $rules = array(
-            'UnitID' => 'required|exists:Units,UnitID'
+            'UnitID' => 'required|exists:units,UnitID'
         );
 
         $validator = Validator::make(Request::all(),$rules);
@@ -188,9 +190,10 @@ class UnitsApiController extends BaseController
         try{
             $UnitID = Request::get('UnitID');
 
-            DB::table('VisitorLog')->where('Visit_UnitID', $UnitID)->delete();
-            DB::table('Tenants')->where('Tenant_UnitID', $UnitID)->delete();
-            DB::table('Units')->where('UnitID',$UnitID)->delete();
+            VisitorLog::where('Visit_UnitID', $UnitID)->delete();
+            Tenants::where('Tenant_UnitID', $UnitID)->delete();
+            Units::find($UnitID)->delete();
+
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -213,9 +216,7 @@ class UnitsApiController extends BaseController
     public function getUnitTenants(){
         $UnitID = Request::get('UnitID');
 
-        $data = DB::table('Tenants')
-                ->where('Tenant_UnitID', $UnitID)
-                ->get();
+        $data = Tenants::where('Tenant_UnitID', $UnitID)->get();
 
         if(count($data) > 0){
             return Response::json(array(
@@ -262,7 +263,8 @@ class UnitsApiController extends BaseController
 
         DB::beginTransaction();
         try{
-            DB::table('Tenants')->insert($addTenantArray);
+            Tenants::create($addTenantArray);
+
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -307,7 +309,8 @@ class UnitsApiController extends BaseController
 
         DB::beginTransaction();
         try{
-            DB::table('Tenants')->where('TenantID', $UnitTenantID)->update($updateTenantArray);
+            Tenants::find($UnitTenantID)->update($updateTenantArray);
+
             DB::commit();
             return Response::json(array(
                 'error' => false,
@@ -328,7 +331,7 @@ class UnitsApiController extends BaseController
 
     public function deleteUnitTenant(){
         $rules = array(
-            'UnitTenantID' => 'required|exists:Tenants,TenantID'
+            'UnitTenantID' => 'required|exists:tenants,TenantID'
         );
 
         $validator = Validator::make(Request::all(),$rules);
@@ -345,7 +348,8 @@ class UnitsApiController extends BaseController
         try{
             $UnitTenantID = Request::get('UnitTenantID');
 
-            DB::table('Tenants')->where('TenantID', $UnitTenantID)->delete();
+            Tenants::find($UnitTenantID)->delete();
+
             DB::commit();
             return Response::json(array(
                 'error' => false,

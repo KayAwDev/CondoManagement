@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ApiAuth;
 use Closure;
 use Session;
 use DB;
@@ -20,41 +21,41 @@ class userSession
         if(Session::has('apiKey')){
             $apiKey = Session::get('apiKey');
 
-            $username = DB::table('apiAuth')->where('apiKey',$apiKey)->value('username');
+            $username = ApiAuth::where('apiKey',$apiKey)->value('username');
 
-            $check = DB::table('WebSecurity')
-                    ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
-                    ->join('WebProgram','WebProgram.ProgramName','=','WebSecurity.ProgramName')
+            $check = DB::table('web_securities')
+                    ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
+                    ->join('web_programs','web_programs.ProgramName','=','web_securities.ProgramName')
                     ->Where('Employees.Emp_Username', $username)
-                    ->where('WebSecurity.Allow',1)
-                    ->where('WebProgram.ParentProgramName',NULL)
-                    ->where('WebProgram.Active',1)
-                    ->orderBy('WebProgram.MenuSequence','asc')
-                    ->select('WebSecurity.ProgramName')
+                    ->where('web_securities.Allow',1)
+                    ->where('web_programs.ParentProgramName',NULL)
+                    ->where('web_programs.Active',1)
+                    ->orderBy('web_programs.MenuSequence','asc')
+                    ->select('web_securities.ProgramName')
                     ->first();
 
             if($check){
-                $checkIfHasChild = DB::table('WebProgram')
-                    ->join('WebSecurity','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-                    ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
-                    ->where('WebProgram.Active',1)
+                $checkIfHasChild = DB::table('web_programs')
+                    ->join('web_securities','web_programs.ProgramName','=','web_securities.ProgramName')
+                    ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
+                    ->where('web_programs.Active',1)
                     ->where('Employees.Emp_Username',$username)
                     ->where('ParentProgramName',$check->ProgramName)
                     ->where('Allow',1)
-                    ->orderBy('WebProgram.MenuSequence','asc')
-                    ->select('WebSecurity.ProgramName')
+                    ->orderBy('web_programs.MenuSequence','asc')
+                    ->select('web_securities.ProgramName')
                     ->first();
 
                 if($checkIfHasChild){
-                    $checkIfHasSecondChild = DB::table('WebProgram')
-                    ->join('WebSecurity','WebProgram.ProgramName','=','WebSecurity.ProgramName')
-                    ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
-                    ->where('WebProgram.Active',1)
+                    $checkIfHasSecondChild = DB::table('web_programs')
+                    ->join('web_securities','web_programs.ProgramName','=','web_securities.ProgramName')
+                    ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
+                    ->where('web_programs.Active',1)
                     ->where('Employees.Emp_Username',$username)
                     ->where('ParentProgramName',$checkIfHasChild->ProgramName)
                     ->where('Allow',1)
-                    ->orderBy('WebProgram.MenuSequence','asc')
-                    ->select('WebSecurity.ProgramName')
+                    ->orderBy('web_programs.MenuSequence','asc')
+                    ->select('web_securities.ProgramName')
                     ->first();
 
                     if($checkIfHasSecondChild){

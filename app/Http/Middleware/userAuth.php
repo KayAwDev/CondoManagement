@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ApiAuth;
+use App\Models\WebProgram;
 use Closure;
 use Session;
 use DB;
@@ -25,10 +27,10 @@ class userAuth
         else{
             $apiKey = Session::get('apiKey');
 
-            $userCode = DB::table('apiAuth')->where('apiKey',$apiKey)->value('username');
+            $userCode = ApiAuth::where('apiKey',$apiKey)->value('username');
 
             if($userCode){
-                $latestKey = DB::table('apiAuth')->where('username',$userCode)->latest('createdAt')->value('apiKey');
+                $latestKey = ApiAuth::where('username',$userCode)->latest('createdAt')->value('apiKey');
 
                 if($latestKey != $apiKey){
                     Session::flush();
@@ -40,24 +42,24 @@ class userAuth
             }
 
             $routeName = Route::currentRouteName();
-            $registeredProgram = DB::table('WebProgram')->where('ProgramName',$routeName)->where('active',1)->first();
+            $registeredProgram = WebProgram::where('ProgramName',$routeName)->where('active',1)->first();
 
             if($registeredProgram)
             {
                 //check parent
-                $checkParent = DB::table('WebProgram')->where('ProgramName',$routeName)->value('parentProgramName');
+                $checkParent = WebProgram::where('ProgramName',$routeName)->value('parentProgramName');
 
                 if($checkParent){
-                    $checkParentAuth = DB::table('WebSecurity')
-                    ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
+                    $checkParentAuth = DB::table('web_securities')
+                    ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
                     ->where('Employees.Emp_Username',$userCode)
                     ->where('ProgramName',$checkParent)
                     ->value('Allow');
 
                     if($checkParentAuth)
                     {
-                        $check = DB::table('WebSecurity')
-                        ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
+                        $check = DB::table('web_securities')
+                        ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
                         ->where('Employees.Emp_Username',$userCode)
                         ->where('ProgramName',$routeName)
                         ->value('Allow');
@@ -72,8 +74,8 @@ class userAuth
                     }
                 }
                 else{
-                    $check = DB::table('WebSecurity')
-                    ->join('Employees','Employees.Emp_Level','=','WebSecurity.Emp_Level')
+                    $check = DB::table('web_securities')
+                    ->join('Employees','Employees.Emp_Level','=','web_securities.Emp_Level')
                     ->where('Employees.Emp_Username',$userCode)
                     ->where('ProgramName',$routeName)
                     ->value('Allow');
